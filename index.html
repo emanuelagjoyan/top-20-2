@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Մեծ Խաղացանկ (48 Թեմա)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 10px;
+            user-select: none;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 5px;
+            margin-top: 5px;
+            font-size: 22px;
+        }
+
+        /* === SCOREBOARD AREA === */
+        .game-header-area {
+            display: none; 
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 5px auto;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .team-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px 10px;
+            border: 3px solid #eee;
+            border-radius: 8px;
+            transition: 0.3s;
+            background: #fdfdfd;
+            flex: 1;
+        }
+
+        .team-box.active-turn {
+            background-color: #e8f5e9;
+            border-color: #28a745;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
+            transform: scale(1.01);
+            z-index: 10;
+        }
+
+        .team-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+
+        .team-name-input {
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            background: transparent;
+            border-bottom: 1px solid #ccc;
+            width: 55%;
+            outline: none;
+        }
+
+        .team-score {
+            font-size: 32px;
+            font-weight: 900;
+            color: #333;
+            line-height: 1;
+        }
+
+        .answer-area {
+            display: flex;
+            width: 100%;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .answer-input {
+            flex: 1;
+            padding: 5px;
+            font-size: 14px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            outline: none;
+        }
+        .answer-input:focus { border-color: #007bff; }
+
+        .check-btn {
+            padding: 0 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .check-btn:hover { background-color: #0056b3; }
+
+        /* CONTROLS */
+        .controls-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+            background: white;
+            padding: 5px 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .ctrl-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        .btn-turn { background-color: #6c757d; }
+        .btn-undo { background-color: #ffc107; color: #333; }
+        .btn-reset { background-color: #dc3545; }
+        .info-text { font-size: 11px; color: #888; margin: 0 5px; text-align: center; }
+
+        /* POPUPS */
+        .notification {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(220, 53, 69, 0.95);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 200;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .setup-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 300;
+            justify-content: center;
+            align-items: center;
+        }
+        .setup-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+        .setup-btn {
+            padding: 15px 30px;
+            font-size: 20px;
+            margin: 10px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.2s;
+        }
+        .setup-btn:hover { transform: scale(1.05); }
+        .btn-2teams { background-color: #007bff; }
+        .btn-3teams { background-color: #28a745; }
+        .btn-cancel { background-color: #6c757d; font-size: 16px; padding: 10px 20px; }
+
+        /* GRIDS */
+        .menu-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 10px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-bottom: 20px;
+        }
+
+        /* === 2 ՍՅՈՒՆԱԿ === */
+        .game-container {
+            display: none;
+            grid-template-columns: 1fr 1fr; /* 2 ՍՅՈՒՆԱԿ */
+            gap: 6px;
+            max-width: 750px; /* Նեղ պահված */
+            margin: 0 auto;
+            padding-bottom: 20px;
+        }
+
+        button.tile-btn {
+            width: 100%;
+            padding: 2px 5px;
+            min-height: 55px; 
+            font-size: 22px; 
+            font-weight: 900; 
+            line-height: 1.1; 
+            color: #0056b3;
+            background-color: white;
+            border: 2px solid #0056b3;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            white-space: pre-line;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button.tile-btn:hover { background-color: #f0f7ff; transform: translateY(-1px); }
+        
+        button.menu-revealed {
+            background-color: #ffc107;
+            color: #333;
+            border-color: #ffc107;
+            font-size: 16px; 
+            min-height: 50px; 
+        }
+
+        button.game-active {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .back-btn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            z-index: 100;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+        .back-btn:hover { opacity: 1; }
+
+        @media (max-width: 1024px) {
+            .menu-container { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .menu-container { grid-template-columns: repeat(2, 1fr); }
+            .controls-bar { flex-direction: column; }
+            .scoreboard { flex-direction: column; }
+            .team-box { width: 95%; }
+            button.tile-btn { font-size: 18px; min-height: 50px; } 
+            h2 { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+    <button id="backButton" class="back-btn" onclick="goBackToMenu()">⬅️ Մենյու</button>
+    <div id="notification" class="notification">Չկա 20-յակում</div>
+    
+    <div id="setupModal" class="setup-modal">
+        <div class="setup-content">
+            <h3>Ընտրեք թիմերի քանակը</h3>
+            <button class="setup-btn btn-2teams" onclick="confirmTeamCount(2)">2 Թիմ</button>
+            <button class="setup-btn btn-3teams" onclick="confirmTeamCount(3)">3 Թիմ</button>
+            <br><br>
+            <button class="setup-btn btn-cancel" onclick="closeSetup()">Չեղարկել</button>
+        </div>
+    </div>
+
+    <h2 id="main-title">ԽԱՂԱՑԱՆԿ (48 Թեմա)</h2>
+
+    <div id="gameHeader" class="game-header-area">
+        <div class="scoreboard">
+            <div id="teamBox1" class="team-box active-turn">
+                <div class="team-header">
+                    <input type="text" id="name1" class="team-name-input" value="Թիմ 1">
+                    <div id="score1" class="team-score">0</div>
+                </div>
+                <div class="answer-area">
+                    <input type="text" id="input1" class="answer-input" placeholder="Պատասխան..." onkeypress="handleEnter(event, 1)">
+                    <button class="check-btn" onclick="checkAnswer(1)">OK</button>
+                </div>
+            </div>
+
+            <div id="teamBox2" class="team-box">
+                <div class="team-header">
+                    <input type="text" id="name2" class="team-name-input" value="Թիմ 2">
+                    <div id="score2" class="team-score">0</div>
+                </div>
+                <div class="answer-area">
+                    <input type="text" id="input2" class="answer-input" placeholder="Պատասխան..." onkeypress="handleEnter(event, 2)">
+                    <button class="check-btn" onclick="checkAnswer(2)">OK</button>
+                </div>
+            </div>
+
+            <div id="teamBox3" class="team-box" style="display: none;">
+                <div class="team-header">
+                    <input type="text" id="name3" class="team-name-input" value="Թիմ 3">
+                    <div id="score3" class="team-score">0</div>
+                </div>
+                <div class="answer-area">
+                    <input type="text" id="input3" class="answer-input" placeholder="Պատասխան..." onkeypress="handleEnter(event, 3)">
+                    <button class="check-btn" onclick="checkAnswer(3)">OK</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-bar">
+            <button class="ctrl-btn btn-turn" onclick="manualSwitchTurn()">⇄ Փոխել հերթը</button>
+            <button class="ctrl-btn btn-undo" onclick="undoLastAction()">↩️ Հետ քայլ</button>
+            <div class="info-text">1-ին = 1 միավոր<br>20-րդ = 20 միավոր</div>
+            <button class="ctrl-btn btn-reset" onclick="resetScores()">⚠️ Զրոյացնել</button>
+        </div>
+    </div>
+
+    <div id="menuArea" class="menu-container"></div>
+    <div id="gameArea" class="game-container"></div>
+
+    <script>
+        // ============================================================
+        // ՏՎՅԱԼՆԵՐ - 48 ԹԵՄԱ
+        // ============================================================
+        const allData = [
+            { title: "Կինոնկարներում ամենաշատ խաղացված դերերը/կերպարները", list: ["Սանտա Կլաուս", "Շեռլոկ Հոլմս", "Դրակուլա", "Հիսուս Քրիստոս", "Նապոլեոն Բոնապարտ", "Ադոլֆ Հիտլեր", "Բեթմեն", "Ֆրանկենշտեյնի հրեշ", "Ջեյմս Բոնդ", "Սուպերմեն", "Համլետ", "Տարզան", "Աբրահամ Լինկոլն", "Զորո", "Ջոկեր", "Ռոբին Հուդ", "Էլվիս Փրեսլի", "Մերիլին Մոնրո", "Մոխրոտիկը", "Սարդ-մարդը"] },
+            { title: "Բոլոր ժամանակների ամենաեկամտաբեր ֆիլմերը", list: ["Ավատար", "Վրիժառուները. Վերջնախաղ", "Ավատար. Ջրի ուղին", "Տիտանիկ", "Աստղային պատերազմներ VII", "Վրիժառուները. Անվերջության պատերազմ", "Սարդ-մարդը. Տունդարձի ճամփա չկա", "Յուրայի դարաշրջանի աշխարհը", "Առյուծ արքան (2019)", "Վրիժառուները (2012)", "Ֆորսաժ 7", "Թոփ Գան. Մեվերիկ", "Սառցե սիրտը 2", "Բարբի", "Սև հովազ", "Հարրի Փոթեր 8", "Մարիո եղբայրներ", "Յուրայի դարաշրջանի աշխարհը 2", "Գեղեցկուհին և հրեշը", "Անհավանականները 2"] },
+            { title: "Հայաստանի ամենախոշոր գետերը (ըստ երկարության)", list: ["Ախուրյան", "Արաքս", "Որոտան", "Հրազդան", "Դեբեդ", "Աղստև", "Արփա", "Քասախ", "Ողջի", "Փամբակ", "Ձորագետ", "Գետիկ", "Վեդի", "Ազատ", "Արգիճի", "Մարտունի", "Մասրիկ", "Գավառագետ", "Մեծամոր", "Տաշիր"] },
+            { title: "Ամենաշատ վաճառված երաժշտական կատարողները", list: ["The Beatles", "Էլվիս Փրեսլի", "Մայքլ Ջեքսոն", "Էլթոն Ջոն", "Queen", "Մադոննա", "Led Zeppelin", "Ռիհաննա", "Pink Floyd", "Eminem", "Մրայա Քերի", "Թեյլոր Սվիֆթ", "Բիյոնսե", "Ուիթնի Հյուսթոն", "AC/DC", "The Rolling Stones", "Դրեյք", "Սելին Դիոն", "Eagles", "Ջասթին Բիբեր"] },
+            { title: "Ամենասիրված մրգերը (ըստ սպառման)", list: ["Նուռ", "Բանան", "Ձմերուկ", "Խնձոր", "Խաղող", "Նարինջ", "Մանգո", "Տանձ", "Մանդարին", "Արքայախնձոր (Անանաս)", "Դեղձ", "Կիտրոն", "Սալոր", "Ելակ", "Թուրինջ (Grapefruit)", "Ավոկադո", "Սեխ", "Ծիրան", "Բալ / Կեռաս", "Կիվի"] },
+            { title: "Ամենաշատ այցելված տեսարժան վայրերը", list: ["Էյֆելյան աշտարակ", "Չինական մեծ պարիսպ", "Կոլիզեյ", "Թաջ Մահալ", "Ազատության արձան", "Մաչու Պիկչու", "Գիզայի բուրգեր", "Լուվր", "Դիսնեյլենդ", "Բիգ Բեն", "Նիագարայի ջրվեժ", "Բուրջ Խալիֆա", "Սիդնեյի օպերային թատրոն", "Վատիկան (Սուրբ Պետրոս)", "Մեծ Կանիոն", "Կենտրոնական այգի (NY)", "Ակրոպոլիս", "Սթոունհենջ", "Սուրբ Սոֆիայի տաճար", "Քրիստոսի արձան (Ռիո)"] },
+            { title: "Ամենատարածված տրանսպորտային միջոցները", list: ["Ավտոմեքենա", "Հեծանիվ", "Ավտոբուս", "Գնացք / Մետրո", "Ոտքով (Քայլել)", "Ինքնաթիռ", "Մոտոցիկլետ", "Նավ / Նավակ", "Բեռնատար", "Տաքսի", "Էլեկտրական սկուտեր", "Ձի / Էշ", "Տրամվայ", "Ուղղաթիռ", "Միկրոավտոբուս", "Սքեյթբորդ", "Նավթատար նավ", "Տրակտոր", "Սուզանավ", "Օդապարիկ"] },
+            { title: "Ամենատարածված համեմունքները", list: ["Սև պղպեղ", "Աղ", "Չաման", "Դարչին", "Մշկընկույզ", "Իմբիր (Կոճապղպեղ)", "Քրքում", "Կարմիր պղպեղ (Պապրիկա)", "Մեխակ", "Հիլ (Cardamom)", "Սխտորի փոշի", "Օրեգանո (Ուրց)", "Ռեհան", "Ծոթրին", "Ռոզմարին", "Զաֆրան", "Վանիլին", "Մանանեխ", "Գինձ", "Անանուխ"] },
+            { title: "Մարդկության մեծագույն գյուտերը", list: ["Անիվ", "Կրակ (ստացում)", "Էլեկտրականություն", "Ինտերնետ", "Համակարգիչ", "Տպագրական մեքենա", "Հեռախոս", "Էլեկտրական լամպ", "Հակաբիոտիկներ (Պենիցիլին)", "Կողմնացույց", "Ինքնաթիռ", "Ավտոմեքենա", "Շոգեշարժիչ", "Թուղթ", "Վառոդ", "Սառնարան", "Տեսախցիկ", "Ժամացույց", "Պատվաստանյութեր", "Ռադիո"] },
+            { title: "Ամենատարածված հոբբիները", list: ["Ընթերցանություն", "Ճանապարհորդություն", "Ձկնորսություն", "Այգեգործություն", "Խոհարարություն", "Սպորտ / Մարզանք", "Վիդեոխաղեր", "Երաժշտություն լսել/նվագել", "Լուսանկարչություն", "Նկարչություն", "Պար", "Արշավներ (Hiking)", "Ֆիլմերի դիտում", "Գնումներ (Shopping)", "Գրել / Ստեղծագործել", "Հավաքորդություն", "Գործել / Կարել", "Փայտագործություն", "Սեղանի խաղեր", "Արշավ (Camping)"] },
+            { title: "Աշխարհի ամենահայտնի նկարիչները", list: ["Լեոնարդո դա Վինչի", "Վինսենթ վան Գոգ", "Պաբլո Պիկասո", "Միքելանջելո", "Ռեմբրանդտ", "Կլոդ Մոնե", "Սալվադոր Դալի", "Ֆրիդա Կալո", "Ռաֆայել", "Յոհաննես Վերմեեր", "Էդվարդ Մունկ", "Գուստավ Կլիմտ", "Պիեռ-Օգյուստ Ռենուար", "Անրի Մատիս", "Էնդի Ուորհոլ", "Պոլ Սեզան", "Ջեքսոն Պոլոք", "Կարավաջո", "Սանդրո Բոտիչելլի", "Հովհաննես Այվազովսկի"] },
+            
+            { title: "Աշխարհում ամենաշատ քանակությամբ պահվող ընտելացված կենդանիները", list: ["Հավ (~33 մլրդ)", "Կով / Խոշոր եղջերավոր (~1.5 մլրդ)", "Բադ (~1.2 մլրդ)", "Ոչխար (~1.2 մլրդ)", "Այծ (~1 մլրդ)", "Խոզ (~980 մլն)", "Շուն (~900 մլն)", "Կատու (~700 մլն)", "Խայտահավ (Guinea Fowl)", "Հնդկահավ", "Ճագար (Rabbit)", "Գոմեշ (Water Buffalo)", "Ձի", "Ավանակ (Donkey)", "Ուղտ", "Սագ", "Լամա / Ալպակա", "Մեղու (ընտանիքներով)", "Ջորի (Mule)", "Համստեր"] },
+            
+            { 
+                title: "Երկրների դրոշների վրա հանդիպող հիմնական և հազվադեպ գույները", 
+                list: [
+                    "Կարմիր (ամենատարածվածը)", "Սպիտակ (2-րդ ամենատարածվածը)", "Կապույտ (ներառյալ մուգ կապույտը)", "Կանաչ (ներառյալ բոլոր երանգները)", "Դեղին (Yellow)", "Սև", "Ոսկեգույն (Gold)", "Երկնագույն (Sky Blue)", "Նարնջագույն (Orange)", "Ծիրանագույն (Apricot)", "Շագանակագույն (Brown)", "Մոխրագույն / Արծաթագույն (Grey/Silver)", "Մանուշակագույն (Purple)", "Մարուն / Մուգ կարմիր (Maroon)", "Փիրուզագույն (Turquoise)", "Զաֆրանագույն (Saffron)", "Պղնձագույն (Copper)", "Բորդո / Որդան կարմիր (Crimson)", "Ակվամարին (Aquamarine)", "Վարդագույն (Pink)"
+                ] 
+            },
+
+            // «Քաղաքները» հեռացված է, փոխարենը Վախերը վերադարձված
+          
+
+            { title: "Ամենաշատ Օսկար ստացած ֆիլմերը", list: ["Մատանիների տիրակալը. Թագավորի վերադարձը (11)", "Տիտանիկ (11)", "Բեն-Հուր (11)", "Վեսթսայդյան պատմություն (10)", "Անգլիացի պացիենտը (9)", "Ջիջի (9)", "Վերջին կայսրը (9)", "Քամուց քշվածները (8)", "Միլիոնատերը ետնախորշից (8)", "Ամադեուս (8)", "Գանդի (8)", "Կաբարե (8)", "Նավահանգստում (8)", "Իմ չքնաղ լեդի (8)", "Շինդլերի ցուցակը (7)", "Աստղային պատերազմներ (1977) (7)", "Գրավիտացիա (7)", "Պարեր գայլերի հետ (7)", "Օպենհայմեր (7)", "Ամեն ինչ, ամենուր և միանգամից (7)"] },
+            { title: "Ամենաշատ թանգարաններ ունեցող քաղաքները", list: ["Փարիզ", "Մոսկվա", "Լոնդոն", "Տոկիո", "Նյու Յորք", "Պեկին", "Շանհայ", "Լոս Անջելես", "Սեուլ", "Մեխիկո", "Հռոմ", "Բեռլին", "Մադրիդ", "Սանկտ Պետերբուրգ", "Ստամբուլ", "Ամստերդամ", "Վիեննա", "Վաշինգտոն", "Պրահա", "Բուենոս Այրես"] },
+            { title: "Աշխարհի ամենաշատ վաճառված գրքերը ներառյալ կրոնականը", list: ["Աստվածաշունչ", "Ղուրան", "Մաո Ցզեդունի մեջբերումները", "Դոն Կիխոտ", "Հարրի Փոթեր (շարքը)", "Երկու քաղաքների պատմություն (Դիկենս)", "Մատանիների տիրակալը", "Փոքրիկ իշխանը", "Ալիսը հրաշքների աշխարհում", "Երազանք կարմիր պալատում", "Եվ ոչ ոք չմնաց (Ագաթա Քրիստի)", "Հոբիթը", "Առյուծը, կախարդը և զգեստապահարանը", "Նա (She: A History of Adventure)", "Վինչիի ծածկագիրը", "Մտածիր և հարստացիր", "Տափաստանի գայլը", "Ալքիմիկոսը", "Տատիկի սարդոստայնը", "Աննա Կարենինա"] },
+            { title: "Աշխարհի ամենաարժեքավոր ավտոընկերությունները (ըստ շուկայական արժեքի)", list: ["Tesla", "Toyota", "Mercedes-Benz", "Porsche", "BMW", "Volkswagen", "Honda", "Hyundai", "Ford", "Audi", "Nissan", "Chevrolet", "Lexus", "Ferrari", "Kia", "Land Rover", "Subaru", "Volvo", "Jeep", "Cadillac"] },
+            { title: "Ամենատարածված սպորտաձևերը աշխարհում (ըստ երկրպագուների)", list: ["Ֆուտբոլ (Soccer)", "Կրիկետ", "Մականախաղ (Field Hockey)", "Թենիս", "Վոլեյբոլ", "Սեղանի թենիս", "Բասկետբոլ", "Բեյսբոլ", "Ռեգբի", "Գոլֆ", "Ֆորմուլա 1", "Բռնցքամարտ", "Մարմնամարզություն", "Լող", "Բադմինտոն", "Ամերիկյան ֆուտբոլ", "Հեծանվասպորտ", "Սնուկեր / Բիլիարդ", "Սառցե հոկեյ", "Ձեռքի գնդակ (Handball)"] },
+            { title: "Ամենաերկար կառավարած Հայոց թագավորները (թագադրված)", list: ["Հեթում Ա (Կիլիկիա) - 44 տարի", "Տրդատ Գ Մեծ - 43 տարի", "Տիգրան Բ Մեծ - 40 տարի", "Գագիկ Ա Արծրունի (Վասպուրական) - 35 տարի", "Գագիկ Ա (Բագրատունի) - 31 տարի", "Արտաշես Ա - 29 տարի", "Աբաս (Բագրատունի) - 25 տարի", "Վռամշապուհ - 25 տարի", "Սմբատ Ա (Բագրատունի) - 24 տարի", "Աշոտ Գ Ողորմած - 24 տարի", "Վաղարշ Ա - 23 տարի", "Տրդատ Ա - 22 տարի", "Սանատրուկ - 22 տարի", "Լևոն Բ (Մեծագործ) - 21 տարի (որպես թագավոր)", "Արտավազդ Բ - 21 տարի", "Լևոն Դ (Կիլիկիա) - 21 տարի", "Մուշեղ (Կարսի թագավոր) - 21 տարի", "Խոսրով Ա - 20 տարի", "Լևոն Գ (Կիլիկիա) - 19 տարի", "Կոստանդին Դ (Կիլիկիա) - 18 տարի"] },
+            { title: "Աշխարհի ամենախելացի կենդանիները ըստ գիտնականների", list: ["Շիմպանզե", "Դելֆին (Աֆալինա)", "Օրանգուտան", "Փիղ", "Ագռավ / Կաչաղակ", "Խոզ", "Աֆրիկյան մոխրագույն թութակ (Ժակո)", "Ութոտնուկ", "Շուն", "Առնետ", "Սկյուռ", "Ջրասամույր", "Ենոտ", "Մրջյուն", "Կետ (Whale)", "Ձի", "Աղավնի", "Կատու", "Մեղու", "Սագ"] },
+            { title: "Ամենաշատը դիտված հեռուստասերիալները", list: ["Գահերի խաղը (Game of Thrones)", "Տարօրինակ դեպքեր (Stranger Things)", "Կաղամարի խաղը (Squid Game)", "Ամբողջ ծանրությամբ (Breaking Bad)", "Ընկերները (Friends)", "Օֆիսը (The Office)", "Քայլող մեռյալները", "Սիմփսոնները", "Չեռնոբիլ", "Թղթե տունը (Money Heist)", "Շեռլոկ", "Պսակը (The Crown)", "Սև հայելին", "Բժիշկ Հաուս", "Մանդալորյանը", "Գերբնականը (Supernatural)", "Վիկինգներ", "Կորուսյալները (Lost)", "Մեծ պայթյունի տեսությունը", "Ինչպես հանդիպեցի մայրիկիդ"] },
+            { title: "Ամենատարածված վախերը (Ֆոբիաներ)", list: ["Արախնոֆոբիա (Սարդերից)", "Օֆիդիոֆոբիա (Օձերից)", "Ակրոֆոբիա (Բարձրությունից)", "Աերոֆոբիա (Թռիչքից)", "Կինոֆոբիա (Շներից)", "Տրիպանոֆոբիա (Ներարկումներից)", "Ագորաֆոբիա (Բաց տարածքներից)", "Կլաուստրոֆոբիա (Փակ տարածքներից)", "Միզոֆոբիա (Մանրէներից)", "Սոցիոֆոբիա (Մարդկանցից)", "Նիկտոֆոբիա (Մթությունից)", "Հեմոֆոբիա (Արյունից)", "Տանատոֆոբիա (Մահից)", "Գլոսոֆոբիա (Ելույթ ունենալուց)", "Աստրաֆոբիա (Ամպրոպից)", "Երուֆոբիա (Միայնությունից)", "Էնտոմոֆոբիա (Միջատներից)", "Ակվաֆոբիա (Ջրից)", "Զոոֆոբիա (Կենդանիներից)", "Տրիպոֆոբիա (Ծակոտիներից)"] },
+            { title: "Ամենատարածված հայկական ազգանունները", list: ["Գրիգորյան", "Հարությունյան", "Սարգսյան", "Հովհաննիսյան", "Խաչատրյան", "Պետրոսյան", "Վարդանյան", "Գևորգյան", "Կարապետյան", "Հակոբյան", "Ավետիսյան", "Մկրտչյան", "Մանուկյան", "Ստեփանյան", "Ղազարյան", "Սիմոնյան", "Աբրահամյան", "Մարտիրոսյան", "Հայրապետյան", "Սահակյան"] },
+            { title: "Ամենատարածված սուրճի տեսակները", list: ["Էսպրեսո", "Կապուչինո", "Լատտե", "Ամերիկանո", "Մոկկա (Mocha)", "Մակիատո", "Ֆլեթ Ուայթ (Flat White)", "Իռլանդական սուրճ", "Ֆրապե (Frappe)", "Թուրքական / Արևելյան սուրճ", "Ռիստրետո", "Աֆոգատո", "Սառը սուրճ (Iced Coffee)", "Լունգո", "Դոպիո", "Վիեննական սուրճ", "Կորտադո", "Գլասե", "Ռեդ Այ (Red Eye)", "Նիտրո սուրճ"] },
+            { title: "Ամենաշատ օգտագործվող բանջարեղենները", list: ["Լոլիկ", "Սոխ", "Կարտոֆիլ", "Վարունգ", "Կաղամբ", "Գազար", "Սմբուկ", "Պղպեղ", "Հազար (Lettuce)", "Սխտոր", "Սպանախ", "Բրոկոլի", "Ծաղկակաղամբ", "Դդմիկ (Zucchini)", "Դդում", "Բազուկ", "Եգիպտացորեն", "Կանաչ լոբի", "Սունկ", "Բողկ"] },
+            { title: "Մարդու մարմնի քիմիական տարրերը (ըստ տոկոսի)", list: ["Թթվածին (65%)", "Ածխածին (18.5%)", "Ջրածին (9.5%)", "Ազոտ (3.2%)", "Կալցիում (1.5%)", "Ֆոսֆոր (1.0%)", "Կալիում (0.4%)", "Ծծումբ (0.3%)", "Նատրիում (0.2%)", "Քլոր (0.2%)", "Մագնեզիում (0.1%)", "Երկաթ", "Ֆտոր", "Ցինկ", "Սիլիցիում", "Ռուբիդիում", "Ստրոնցիում", "Բրոմ", "Կապար", "Պղինձ"] },
+            { title: "Ամենաուժեղ կծելու ուժ ունեցող կենդանիները", list: ["Կոկորդիլոս (Saltwater)", "Նեղոսյան կոկորդիլոս", "Սպիտակ շնաձուկ", "Գետաձի", "Յագուար", "Գորիլա", "Բևեռային արջ", "Բծավոր բորենի", "Վագր", "Առյուծ", "Գրիզլի արջ", "Կոդիակ արջ", "Ցուլ շնաձուկ", "Մեծ ծովային կրիա (Alligator Snapping Turtle)", "Պումա", "Ընձառյուծ", "Գայլ", "Կանգալ շուն", "Մաստիֆ", "Տասմանյան հրեշ"] },
+            { title: "Ըստ համացանցում հարցումների ամենատարածված հայկական պարերը", list: ["Քոչարի", "Յարխուշտա", "Բերդ", "Շալախո", "Թամզարա", "Մշո խըռ", "Իշխանաց պար", "Վերվերի", "Փափուռի", "Լորկե", "Էջմիածին", "Կարնո քոչարի", "Գովընդ", "Արցախի", "Ծաղկաձորի", "Նինարե", "Սասնա պար", "Մոմերով պար", "Հարսանեկան պար", "Զուռնի տրնգի"] },
+            { title: "Ամենաշատ այցելվող երկրները (զբոսաշրջիկներով)", list: ["Ֆրանսիա", "Իսպանիա", "ԱՄՆ", "Չինաստան", "Իտալիա", "Թուրքիա", "Մեքսիկա", "Թաիլանդ", "Գերմանիա", "Մեծ Բրիտանիա", "Ճապոնիա", "Ավստրիա", "Հունաստան", "Մալայզիա", "Պորտուգալիա", "Ռուսաստան", "Հոնկոնգ", "Լեհաստան", "Կանադա", "Նիդերլանդներ"] },
+            { title: "Instagram-ի ամենաշատ հետևորդ ունեցող մարդիկ", list: ["Instagram (պաշտոնական էջ)", "Կրիշտիանու Ռոնալդու", "Լիոնել Մեսսի", "Սելենա Գոմես", "Քայլի Ջեններ", "Դուեյն Ջոնսոն (The Rock)", "Արիանա Գրանդե", "Քիմ Քարդաշյան", "Բիյոնսե", "Քլոե Քարդաշյան", "Ջասթին Բիբեր", "Քենդալ Ջեններ", "Նայք (Nike)", "Թեյլոր Սվիֆթ", "Նեյմար", "Վիրատ Կոհլի", "Ջենիֆեր Լոպես", "Նիքի Մինաժ", "Մայլի Սայրուս", "Քեթի Փերրի"] },
+            { title: "Բոլոր ժամանակների մեծագույն դասական կոմպոզիտորները", list: ["Լյուդվիգ վան Բեթհովեն", "Վոլֆգանգ Ամադեուս Մոցարտ", "Յոհան Սեբաստիան Բախ", "Պյոտր Չայկովսկի", "Ֆրեդերիկ Շոպեն", "Անտոնիո Վիվալդի", "Ֆրանց Շուբերտ", "Ռիխարդ Վագներ", "Յոհաննես Բրամս", "Ժոզեֆ Հայդն", "Ջուզեպպե Վերդի", "Գեորգ Ֆրիդրիխ Հենդել", "Ֆերենց Լիստ", "Սերգեյ Ռախմանինով", "Իգոր Ստրավինսկի", "Կլոդ Դեբյուսի", "Գուստավ Մալեր", "Դմիտրի Շոստակովիչ", "Արամ Խաչատրյան", "Ջակոմո Պուչինի"] },
+            { title: "Ամենաշատ կղզիներ ունեցող երկները", list: ["Շվեդիա (~267,570)", "Նորվեգիա (~239,057)", "Ֆինլանդիա (~178,947)", "Կանադա (~52,455)", "ԱՄՆ (~18,617)", "Ինդոնեզիա (~17,508)", "Ավստրալիա (~8,222)", "Ֆիլիպիններ (~7,641)", "Ճապոնիա (~6,852)", "Չիլի (~5,000)", "Չինաստան (~5,000)", "Հարավային Կորեա (~4,400)", "Կուբա (~4,195)", "Վիետնամ (~4,000)", "Հյուսիսային Կորեա (~3,579)", "Հունաստան (~3,054)", "Էստոնիա (~2,355)", "Թաիլանդ (~1,430)", "Դանիա (~1,419)", "Խորվաթիա (~1,244)"] },
+            { title: "Եվրոպայի ամենամեծ քաղաքները (բնակչությամբ)", list: ["Ստամբուլ", "Մոսկվա", "Լոնդոն", "Սանկտ Պետերբուրգ", "Բեռլին", "Մադրիդ", "Կիև", "Հռոմ", "Փարիզ", "Բուխարեստ", "Մինսկ", "Վիեննա", "Համբուրգ", "Վարշավա", "Բուդապեշտ", "Բարսելոնա", "Մյունխեն", "Խարկով", "Միլան", "Բելգրադ"] },
+
+            { 
+                title: "Եվրոպայում ամենատարածված ազգանունները (ընդհանուր քանակով)", 
+                list: ["Իվանով (Ivanov)", "Գարսիա (Garcia)", "Սմիրնով (Smirnov)", "Մյուլլեր (Müller)", "Սմիթ (Smith)", "Մարտին (Martin)", "Ռոդրիգես (Rodriguez)", "Ֆեռնանդես (Fernandez)", "Գոնսալես (Gonzalez)", "Լոպես (Lopez)", "Նովակ (Novak)", "Կուզնեցով (Kuznetsov)", "Պոպով (Popov)", "Ռոսսի (Rossi)", "Յիլմազ (Yilmaz)", "Շնայդեր (Schneider)", "Պետրով (Petrov)", "Անդերսոն (Andersson)", "Յոհանսոն (Johansson)", "Մերֆի (Murphy)"]
+            },
+            { title: "Ամենաթանկ ազգային արժույթները", list: ["Քուվեյթյան դինար", "Բահրեյնյան դինար", "Օմանյան ռիալ", "Հորդանանյան դինար", "Բրիտանական ֆունտ", "Ջիբրալթարի ֆունտ", "Կայմանյան կղզիների դոլար", "Շվեյցարական ֆրանկ", "Եվրո", "ԱՄՆ դոլար", "Կանադական դոլար", "Սինգապուրյան դոլար", "Բրունեյի դոլար", "Ավստրալիական դոլար", "Նորզելանդական դոլար", "Ադրբեջանական մանաթ", "Լիբիական դինար", "Բուլղարական լև", "Վրացական լարի", "Կատարի ռիալ"] },
+            { title: "Ամենաշատ բրինձ արտադրող երկրները", list: ["Չինաստան", "Հնդկաստան", "Բանգլադեշ", "Ինդոնեզիա", "Վիետնամ", "Թաիլանդ", "Մյանմա", "Ֆիլիպիններ", "Պակիստան", "Բրազիլիա", "Կամբոջա", "Ճապոնիա", "ԱՄՆ", "Նիգերիա", "Եգիպտոս", "Հարավային Կորեա", "Նեպալ", "Շրի Լանկա", "Մադագասկար", "Լաոս"] },
+            { title: "Ամենաշատ ցորեն աճեցնող երկրները", list: ["Չինաստան", "Հնդկաստան", "Ռուսաստան", "ԱՄՆ", "Ֆրանսիա", "Կանադա", "Ավստրալիա", "Պակիստան", "Ուկրաինա", "Գերմանիա", "Թուրքիա", "Արգենտինա", "Մեծ Բրիտանիա", "Ղազախստան", "Լեհաստան", "Եգիպտոս", "Իրան", "Ռումինիա", "Բրազիլիա", "Իտալիա"] },
+            { title: "Աշխարհի երկրները ըստ նավթի պաշարների (հաստատված)", list: ["Վենեսուելա (~303 մլրդ բարել)", "Սաուդյան Արաբիա (~267)", "Իրան (~208)", "Կանադա (~167)", "Իրաք (~145)", "ԱՄԷ (~111)", "Քուվեյթ (~101)", "Ռուսաստան (~80)", "ԱՄՆ (~68)", "Լիբիա (~48)", "Նիգերիա (~37)", "Ղազախստան (~30)", "Չինաստան (~26)", "Քաթար (~25)", "Բրազիլիա (~13)", "Ալժիր (~12)", "Մեքսիկա (~10)", "Անգոլա (~8)", "Էկվադոր (~8)", "Ադրբեջան (~7)"] },
+            { 
+                title: "Ներկայումս գոյություն ունեցող ամենահին երկրները/պետականությունները", 
+                list: ["Իրան (մ.թ.ա. ~3200)", "Եգիպտոս (մ.թ.ա. ~3150)", "Վիետնամ (մ.թ.ա. ~2879)", "Հայաստան (մ.թ.ա. ~2492 / 860)", "Չինաստան (մ.թ.ա. ~2070)", "Հունաստան (մ.թ.ա. ~1600)", "Հնդկաստան (մ.թ.ա. ~1500)", "Եթովպիա (մ.թ.ա. ~980)", "Ճապոնիա (մ.թ.ա. ~660)", "Վրաստան (մ.թ.ա. ~302)", "Սան Մարինո (301 թ.)", "Ֆրանսիա (486 թ.)", "Բուլղարիա (681 թ.)", "Մեծ Բրիտանիա (927 թ.)", "Դանիա (~958 թ.)", "Պորտուգալիա (1143 թ.)", "Մոնղոլիա (1206 թ.)", "Թաիլանդ (1238 թ.)", "Անդորրա (1278 թ.)", "Շվեյցարիա (1291 թ.)"] 
+            },
+            { title: "Ամենացածր ուրբանիզացման մակարդակ ունեցող երկրները", list: ["Պապուա Նոր Գվինեա (~13%)", "Բուրունդի (~14%)", "Լիխտենշտայն (~15%)", "Նիգեր (~17%)", "Մալավի (~18%)", "Ռուանդա (~18%)", "Շրի Լանկա (~19%)", "Սամոա (~19%)", "Հարավային Սուդան (~20%)", "Եթովպիա (~22%)", "Կամբոջա (~24%)", "Չադ (~24%)", "Քենիա (~28%)", "Աֆղանստան (~26%)", "Նեպալ (~21%)", "Տաջիկստան (~27%)", "Գայանա (~27%)", "Լեսոտո (~29%)", "Վիետնամ (~38%)", "Հնդկաստան (~35%)"] },
+            { title: "Ամենաշատ 1 մլն-ից ավել բնակչությամբ քաղաքներ ունեցող երկրները", list: ["Չինաստան (100+)", "Հնդկաստան (50+)", "Բրազիլիա (17)", "Ռուսաստան (16)", "Ինդոնեզիա (15)", "Ճապոնիա (12)", "ԱՄՆ (10 քաղաք / 50+ մետրո)", "Նիգերիա (8)", "Պակիստան (8)", "Մեքսիկա (10)", "Հարավային Կորեա (9)", "Իրան (8)", "Թուրքիա (6)", "Վիետնամ (5)", "Ավստրալիա (5)", "Կոլումբիա (4)", "Գերմանիա (4)", "Եգիպտոս (4)", "Ֆիլիպիններ (4)", "Կանադա (3)"] },
+            { title: "Ամենաշատ մզկիթներ ունեցող երկրները", list: ["Ինդոնեզիա (~800,000)", "Հնդկաստան (~300,000)", "Բանգլադեշ (~250,000)", "Պակիստան (~120,000)", "Եգիպտոս (~108,000)", "Սաուդյան Արաբիա (~98,000)", "Թուրքիա (~82,000)", "Իրան (~72,000)", "Մարոկկո (~51,000)", "Ալժիր (~40,000)", "Իրաք (~35,000)", "Աֆղանստան (~30,000)", "Սուդան (~20,000)", "Նիգերիա (~20,000)", "Եմեն (~15,000)", "Մալայզիա (~15,000)", "Սիրիա (~10,000)", "Ռուսաստան (~8,000)", "ԱՄՆ (~2,700)", "Ֆրանսիա (~2,500)"] },
+            { title: "Համացանցում ամենաշատ որոնված հայ գրողները", list: ["Հովհաննես Թումանյան", "Պարույր Սևակ", "Եղիշե Չարենց", "Վիլյամ Սարոյան", "Ավետիք Իսահակյան", "Վահան Տերյան", "Սիլվա Կապուտիկյան", "Հովհաննես Շիրազ", "Րաֆֆի", "Հրանտ Մաթևոսյան", "Խաչատուր Աբովյան", "Լևոն Շանթ", "Ակսել Բակունց", "Միսաք Մեծարենց", "Դանիել Վարուժան", "Սիամանթո", "Զապել Եսայան", "Պետրոս Դուրյան", "Կոստան Զարյան", "Վահագն Դավթյան"] },
+
+            // === ՆՈՐ 5 ԹԵՄԱՆԵՐ ===
+            { title: "Ամենաշատ միս օգտագործող երկրները (կգ/մարդ)", list: ["Հոնկոնգ", "ԱՄՆ", "Ավստրալիա", "Արգենտինա", "Մակաո", "Նոր Զելանդիա", "Իսպանիա", "Բրազիլիա", "Իսրայել", "Կանադա", "Չիլի", "Սամոա", "Սենտ Վինսենթ", "Պորտուգալիա", "Լեհաստան", "Գերմանիա", "Իռլանդիա", "Ուրուգվայ", "Մեծ Բրիտանիա", "Ավստրիա"] },
+            { 
+                title: "Եվրոպայում ամենատարածված անունները (ըստ երկրների)", 
+                list: ["Մարիա", "Էմմա", "Միա", "Սոֆիա", "Աննա", "Նոյ", "Լուկաս", "Յակուբ", "Լիամ", "Ալեքսանդր", "Էլիաս", "Ֆրանչեսկո", "Հուգո", "Օլիվեր", "Լուկա", "Գեորգիոս", "Անդրեյ", "Յոնաս", "Մաքսիմ", "Բենսե"],
+                hints: ["Պորտուգալիա", "Գերմանիա", "Խորվաթիա", "Ռուսաստան", "Ավստրիա", "Մեծ Բրիտանիա", "Ֆրանսիա", "Լեհաստան", "Իռլանդիա", "Բուլղարիա", "Ֆինլանդիա", "Իտալիա", "Իսպանիա", "Մեծ Բրիտանիա", "Բալկաններ", "Հունաստան", "Ռումինիա", "Լիտվա", "Ուկրաինա", "Հունգարիա"]
+            },
+            { 
+                title: "Կենցաղում օգտագործվող իրերը ըստ վաղեմության", 
+                list: ["Քարե դանակ", "Կրակ", "Անկողին/Ներքնակ", "Ասեղ", "Ֆլեյտա", "Պարան", "Կավե ամանեղեն", "Զամբյուղ", "Հայելի", "Կոշիկ", "Սանր", "Օճառ", "Աթոռ", "Գդալ", "Անձրևանոց", "Մկրատ", "Կողպեք/Բանալի", "Պատառաքաղ", "Ատամի խոզանակ", "Լուցկի"],
+                hints: ["~3.3 մլն տարի", "~1 մլն տարի", "~77,000 տարի", "~50,000 տարի", "~40,000 տարի", "~28,000 տարի", "~20,000 տարի", "~10,000 տարի", "~6,000 տարի", "~5,500 տարի", "~5,000 տարի", "~4,800 տարի", "~4,000 տարի", "~3,000 տարի", "~3,000 տարի", "~3,000 տարի", "~2,500 տարի", "~1,000 տարի", "1498 թ.", "1826 թ."]
+            },
+            { title: "Համացանցում ամենաշատ որոնված բառերը (Top Keywords)", list: ["YouTube", "Facebook", "WhatsApp", "Weather", "Translate", "Google", "Amazon", "Instagram", "News", "Gmail", "Maps", "Calculator", "NBA", "Twitter / X", "Netflix", "Cricbuzz", "Hotmail", "Wikipedia", "Roblox", "ChatGPT"] },
+            { 
+                title: "Այժմ գոյություն չունեցող հնագույն պետությունները", 
+                list: ["Շումեր", "Հին Եգիպտոս", "Էլամ", "Աքքադ", "Բաբելոն", "Խեթական թագավորություն", "Ասորեստան", "Փյունիկիա", "Ուրարտու", "Աքեմենյան Պարսկաստան", "Կարթագեն", "Մակեդոնական կայսրություն", "Պարթևաստան", "Հռոմեական կայսրություն", "Բյուզանդիա", "Արաբական խալիֆայություն", "Մոնղոլական կայսրություն", "Ացտեկների կայսրություն", "Ինկերի կայսրություն", "Օսմանյան կայսրություն"]
+            }
+        ];
+
+        let menuState = new Array(48).fill(0);
+        let gameStates = Array.from({ length: 48 }, () => new Array(20).fill(false));
+
+        let scoreTeam1 = 0;
+        let scoreTeam2 = 0;
+        let scoreTeam3 = 0;
+        let activeTurn = 1; 
+        let teamCount = 2; // Default 2 teams
+
+        let historyStack = [];
+
+        // DOM Elements
+        const menuArea = document.getElementById("menuArea");
+        const gameArea = document.getElementById("gameArea");
+        const mainTitle = document.getElementById("main-title");
+        const backButton = document.getElementById("backButton");
+        const gameHeader = document.getElementById("gameHeader");
+        
+        const scoreDisplay1 = document.getElementById("score1");
+        const scoreDisplay2 = document.getElementById("score2");
+        const scoreDisplay3 = document.getElementById("score3");
+        
+        const box1 = document.getElementById("teamBox1");
+        const box2 = document.getElementById("teamBox2");
+        const box3 = document.getElementById("teamBox3");
+        
+        const notification = document.getElementById("notification");
+        const setupModal = document.getElementById("setupModal");
+
+        let currentGameIndex = -1;
+
+        // ----------------------------------------------------
+        // 1. SETUP LOGIC
+        // ----------------------------------------------------
+        function startSetup(index) {
+            currentGameIndex = index;
+            setupModal.style.display = "flex";
+        }
+
+        function closeSetup() {
+            setupModal.style.display = "none";
+        }
+
+        function confirmTeamCount(count) {
+            teamCount = count;
+            closeSetup();
+            
+            // Adjust UI for 3rd team
+            if (teamCount === 3) {
+                box3.style.display = "flex";
+            } else {
+                box3.style.display = "none";
+            }
+            
+            startGame();
+        }
+
+        // ----------------------------------------------------
+        // 2. STATE MANAGEMENT (UNDO)
+        // ----------------------------------------------------
+        function saveState() {
+            historyStack.push({
+                s1: scoreTeam1,
+                s2: scoreTeam2,
+                s3: scoreTeam3,
+                turn: activeTurn,
+                currentGameState: [...gameStates[currentGameIndex]] 
+            });
+        }
+
+        function undoLastAction() {
+            if (historyStack.length === 0) {
+                alert("Հետ գնալու քայլ չկա։");
+                return;
+            }
+
+            let lastState = historyStack.pop();
+            
+            scoreTeam1 = lastState.s1;
+            scoreTeam2 = lastState.s2;
+            scoreTeam3 = lastState.s3;
+            activeTurn = lastState.turn;
+            gameStates[currentGameIndex] = lastState.currentGameState;
+
+            scoreDisplay1.innerText = scoreTeam1;
+            scoreDisplay2.innerText = scoreTeam2;
+            scoreDisplay3.innerText = scoreTeam3;
+            
+            updateTurnUI();
+            refreshGridUI(currentGameIndex);
+        }
+
+        function refreshGridUI(index) {
+            const currentData = allData[index];
+            for(let i = 0; i < 20; i++) {
+                let btn = document.getElementById(`tile-${i}`);
+                if (gameStates[index][i]) {
+                    btn.innerText = `${i + 1}. ${currentData.list[i]}`;
+                    btn.classList.add("game-active");
+                } else {
+                    // Check for hints again when refreshing
+                    let placeText = `Հորիզոնական ${i+1}`;
+                    if (currentData.hints && currentData.hints[i]) {
+                        placeText = `${i + 1}. ${currentData.hints[i]}`;
+                    }
+                    btn.innerText = placeText;
+                    btn.classList.remove("game-active");
+                }
+            }
+        }
+
+        // ----------------------------------------------------
+        // 3. GAME LOGIC
+        // ----------------------------------------------------
+        function manualSwitchTurn() {
+            saveState();
+            switchTurn();
+        }
+
+        function switchTurn() {
+            activeTurn++;
+            if (activeTurn > teamCount) {
+                activeTurn = 1;
+            }
+            updateTurnUI();
+            
+            document.getElementById("input1").value = "";
+            document.getElementById("input2").value = "";
+            document.getElementById("input3").value = "";
+        }
+
+        function updateTurnUI() {
+            box1.classList.remove("active-turn");
+            box2.classList.remove("active-turn");
+            box3.classList.remove("active-turn");
+
+            if (activeTurn === 1) box1.classList.add("active-turn");
+            else if (activeTurn === 2) box2.classList.add("active-turn");
+            else if (activeTurn === 3) box3.classList.add("active-turn");
+        }
+
+        function updateScore(points) {
+            if (activeTurn === 1) {
+                scoreTeam1 += points;
+                scoreDisplay1.innerText = scoreTeam1;
+            } else if (activeTurn === 2) {
+                scoreTeam2 += points;
+                scoreDisplay2.innerText = scoreTeam2;
+            } else if (activeTurn === 3) {
+                scoreTeam3 += points;
+                scoreDisplay3.innerText = scoreTeam3;
+            }
+        }
+
+        function resetScores() {
+            if (confirm("Զրոյացնե՞լ հաշիվը: ⚠️")) {
+                saveState();
+                scoreTeam1 = 0;
+                scoreTeam2 = 0;
+                scoreTeam3 = 0;
+                scoreDisplay1.innerText = 0;
+                scoreDisplay2.innerText = 0;
+                scoreDisplay3.innerText = 0;
+            }
+        }
+
+        // ----------------------------------------------------
+        // 4. MENU
+        // ----------------------------------------------------
+        function renderMenu() {
+            menuArea.innerHTML = "";
+            mainTitle.innerText = "ԽԱՂԱՑԱՆԿ (48 Թեմա)";
+            menuArea.style.display = "grid";
+            gameArea.style.display = "none";
+            backButton.style.display = "none";
+            gameHeader.style.display = "none";
+            historyStack = [];
+
+            allData.forEach((item, index) => {
+                let btn = document.createElement("button");
+                btn.className = "tile-btn";
+                
+                if (menuState[index] === 0) {
+                    btn.innerText = `${index + 1}`;
+                } else {
+                    btn.innerText = `${index + 1}. ${item.title}`;
+                    btn.classList.add("menu-revealed");
+                }
+
+                btn.onclick = () => {
+                    if (menuState[index] === 0) {
+                        menuState[index] = 1;
+                        renderMenu();
+                    } else {
+                        // Open Setup Modal instead of direct start
+                        startSetup(index);
+                    }
+                };
+
+                btn.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    if (menuState[index] === 1) {
+                        menuState[index] = 0;
+                        renderMenu();
+                    }
+                };
+                
+                menuArea.appendChild(btn);
+            });
+        }
+
+        // ----------------------------------------------------
+        // 5. START GAME
+        // ----------------------------------------------------
+        function startGame() {
+            menuArea.style.display = "none";
+            gameArea.style.display = "grid";
+            backButton.style.display = "block";
+            gameHeader.style.display = "flex";
+            
+            historyStack = [];
+            scoreTeam1 = 0; scoreTeam2 = 0; scoreTeam3 = 0;
+            scoreDisplay1.innerText = 0; scoreDisplay2.innerText = 0; scoreDisplay3.innerText = 0;
+            activeTurn = 1;
+            updateTurnUI();
+            
+            document.getElementById("input1").value = "";
+            document.getElementById("input2").value = "";
+            document.getElementById("input3").value = "";
+
+            const currentData = allData[currentGameIndex];
+            mainTitle.innerText = currentData.title;
+
+            gameArea.innerHTML = "";
+
+            for(let i = 0; i < 20; i++) {
+                let btn = document.createElement("button");
+                btn.className = "tile-btn";
+                btn.id = `tile-${i}`;
+                
+                let placeText = `Հորիզոնական ${i+1}`;
+                
+                // === ՆՈՐ ՓՈՓՈԽՈՒԹՅՈՒՆ. Եթե կան hints (հուշումներ), ցույց տալ դրանք ===
+                if (currentData.hints && currentData.hints[i]) {
+                    placeText = `${i + 1}. ${currentData.hints[i]}`;
+                }
+
+                let answerText = currentData.list[i];
+
+                if (gameStates[currentGameIndex][i] === true) {
+                    btn.innerText = `${i + 1}. ${answerText}`;
+                    btn.classList.add("game-active");
+                } else {
+                    btn.innerText = placeText;
+                }
+                
+                btn.onclick = function() {
+                    let pointValue = i + 1;
+                    
+                    if (this.classList.contains("game-active")) {
+                        if(confirm(`Փակե՞լ վանդակը և հանել ${pointValue} միավոր ակտիվ թիմից։`)) {
+                            saveState();
+                            updateScore(-pointValue);
+                            this.innerText = placeText;
+                            this.classList.remove("game-active");
+                            gameStates[currentGameIndex][i] = false;
+                        }
+                    } else {
+                        saveState();
+                        revealTile(i);
+                    }
+                };
+                
+                gameArea.appendChild(btn);
+            }
+        }
+
+        // ----------------------------------------------------
+        // 6. CHECKING LOGIC
+        // ----------------------------------------------------
+        function handleEnter(event, teamId) {
+            if(event.key === 'Enter') {
+                checkAnswer(teamId);
+            }
+        }
+
+        function cleanString(str) {
+            return str.replace(/\(.*\)/g, "").replace(/\n/g, " ").replace(/[^\p{L}\p{N}\s]/gu, "").trim().toLowerCase();
+        }
+
+        function checkAnswer(teamId) {
+            if (teamId !== activeTurn) {
+                alert("Հիմա մյուս թիմի հերթն է։");
+                return;
+            }
+
+            let inputId = `input${teamId}`;
+            let rawInput = document.getElementById(inputId).value;
+            let userAnswer = cleanString(rawInput);
+            
+            if(userAnswer.length < 2) return; 
+
+            saveState();
+
+            let currentList = allData[currentGameIndex].list;
+            let foundIndex = -1;
+
+            for(let i=0; i<20; i++) {
+                if(gameStates[currentGameIndex][i]) continue;
+
+                let correctAnswer = currentList[i];
+                let correctParts = correctAnswer.toLowerCase().split(/[\n,()/]+/).map(s => s.trim()).filter(s => s.length > 0);
+
+                for(let part of correctParts) {
+                    if (part === userAnswer || (userAnswer.length > 3 && part.includes(userAnswer))) {
+                        foundIndex = i;
+                        break;
+                    }
+                }
+                if(foundIndex !== -1) break;
+            }
+
+            if (foundIndex !== -1) {
+                revealTile(foundIndex);
+            } else {
+                showNotification();
+                setTimeout(switchTurn, 1500);
+            }
+        }
+
+        function showNotification() {
+            notification.style.display = "block";
+            setTimeout(() => {
+                notification.style.display = "none";
+            }, 1500);
+        }
+
+        function revealTile(index) {
+            let pointValue = index + 1; 
+            let btn = document.getElementById(`tile-${index}`);
+            let answerText = allData[currentGameIndex].list[index];
+
+            btn.innerText = `${index + 1}. ${answerText}`;
+            btn.classList.add("game-active");
+            gameStates[currentGameIndex][index] = true;
+
+            updateScore(pointValue);
+            setTimeout(switchTurn, 500);
+        }
+
+        function goBackToMenu() {
+            renderMenu();
+        }
+
+        renderMenu();
+
+    </script>
+</body>
+</html>
