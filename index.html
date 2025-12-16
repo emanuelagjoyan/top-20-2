@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Մեծ Խաղացանկ (48 Թեմա)</title>
+    <title>Մեծ Խաղացանկ (48 Թեմա) - Special Effects</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -14,6 +14,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden; /* Էֆեկտների ժամանակ սքրոլը թաքցնելու համար */
         }
         h2 {
             text-align: center;
@@ -230,6 +231,7 @@
             text-align: center;
             white-space: pre-line;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
         }
         button.tile-btn:hover { background-color: #f0f7ff; transform: translateY(-1px); }
         
@@ -264,6 +266,116 @@
         }
         .back-btn:hover { opacity: 1; }
 
+        /* ================= EFFECTS CSS ================= */
+        
+        /* Overlay for effects */
+        #effects-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Large Emoji/Text Animation */
+        .effect-text {
+            font-size: 150px;
+            font-weight: 900;
+            color: #ffc107;
+            text-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, fadeOut 0.5s ease-in 2.5s forwards;
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        .effect-wow {
+            color: #ff4081;
+            font-size: 120px;
+        }
+
+        /* --- UPDATED Flying Number Element --- */
+        .flying-number {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            font-size: 200px;            /* BIGGER SIZE */
+            font-weight: 900;
+            color: #28a745;              /* GREEN COLOR */
+            background: white;
+            padding: 25px;
+            border-radius: 30px;
+            border: none;                /* NO BORDER */
+            z-index: 10001;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5); /* Larger shadow for depth */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1); 
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Shake Animation (Body) */
+        .shake-screen {
+            animation: shakeHard 0.5s infinite;
+        }
+
+        @keyframes shakeHard {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* Explosion Flash */
+        .flash-bang {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: white;
+            opacity: 0;
+            z-index: 10000;
+            pointer-events: none;
+            animation: flashAnim 0.5s ease-out;
+        }
+
+        @keyframes flashAnim {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Fireworks Particles */
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: explode 1s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; }
+        }
+
+
         @media (max-width: 1024px) {
             .menu-container { grid-template-columns: repeat(4, 1fr); }
         }
@@ -274,6 +386,8 @@
             .team-box { width: 95%; }
             button.tile-btn { font-size: 18px; min-height: 50px; } 
             h2 { font-size: 18px; }
+            .effect-text { font-size: 80px; }
+            .flying-number { font-size: 120px; padding: 15px; }
         }
     </style>
 </head>
@@ -281,6 +395,8 @@
 
     <button id="backButton" class="back-btn" onclick="goBackToMenu()">⬅️ Մենյու</button>
     <div id="notification" class="notification">Չկա 20-յակում</div>
+    
+    <div id="effects-overlay"></div>
     
     <div id="setupModal" class="setup-modal">
         <div class="setup-content">
@@ -448,6 +564,7 @@
         const mainTitle = document.getElementById("main-title");
         const backButton = document.getElementById("backButton");
         const gameHeader = document.getElementById("gameHeader");
+        const effectsOverlay = document.getElementById("effects-overlay");
         
         const scoreDisplay1 = document.getElementById("score1");
         const scoreDisplay2 = document.getElementById("score2");
@@ -478,7 +595,6 @@
             teamCount = count;
             closeSetup();
             
-            // Adjust UI for 3rd team
             if (teamCount === 3) {
                 box3.style.display = "flex";
             } else {
@@ -531,7 +647,6 @@
                     btn.innerText = `${i + 1}. ${currentData.list[i]}`;
                     btn.classList.add("game-active");
                 } else {
-                    // Check for hints again when refreshing
                     let placeText = `Հորիզոնական ${i+1}`;
                     if (currentData.hints && currentData.hints[i]) {
                         placeText = `${i + 1}. ${currentData.hints[i]}`;
@@ -598,7 +713,192 @@
         }
 
         // ----------------------------------------------------
-        // 4. MENU
+        // 4. EFFECTS LOGIC (INTEGRATED)
+        // ----------------------------------------------------
+        
+        function showTextEffect(text, isWow = false) {
+            const el = document.createElement("div");
+            el.className = "effect-text";
+            if(isWow) el.classList.add("effect-wow");
+            el.innerText = text;
+            effectsOverlay.style.display = "flex";
+            effectsOverlay.innerHTML = "";
+            effectsOverlay.appendChild(el);
+            
+            setTimeout(() => {
+                effectsOverlay.innerHTML = "";
+                effectsOverlay.style.display = "none";
+            }, 3000);
+        }
+
+        function runDiscoEffect(callback) {
+            // 1. Shake Screen
+            document.body.classList.add("shake-screen");
+            
+            const tiles = document.querySelectorAll(".tile-btn");
+            let interval = setInterval(() => {
+                tiles.forEach(tile => {
+                    const r = Math.floor(Math.random() * 255);
+                    const g = Math.floor(Math.random() * 255);
+                    const b = Math.floor(Math.random() * 255);
+                    tile.style.backgroundColor = `rgb(${r},${g},${b})`;
+                    tile.style.color = "#fff";
+                });
+            }, 100);
+
+            // 2. Wait 2.4 seconds
+            setTimeout(() => {
+                clearInterval(interval);
+                document.body.classList.remove("shake-screen");
+                
+                // Reset styles
+                tiles.forEach(tile => {
+                    tile.style.backgroundColor = "";
+                    tile.style.color = "";
+                });
+                refreshGridUI(currentGameIndex); 
+
+                // 3. Explosion
+                const flash = document.createElement("div");
+                flash.className = "flash-bang";
+                document.body.appendChild(flash);
+                setTimeout(() => flash.remove(), 500);
+
+                // 4. Reveal
+                callback();
+            }, 2400);
+        }
+
+        function runFireworks() {
+            effectsOverlay.style.display = "flex";
+            effectsOverlay.innerHTML = "";
+            
+            // Create "WOW!!!" text
+            const wowText = document.createElement("div");
+            wowText.className = "effect-text effect-wow";
+            wowText.innerText = "WOW!!!";
+            effectsOverlay.appendChild(wowText);
+
+            // Create Particles
+            for (let i = 0; i < 50; i++) {
+                const p = document.createElement("div");
+                p.className = "particle";
+                p.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                p.style.left = "50%";
+                p.style.top = "50%";
+                
+                // Random directions
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 200 + Math.random() * 300;
+                const x = Math.cos(angle) * distance + "px";
+                const y = Math.sin(angle) * distance + "px";
+                
+                p.style.setProperty('--x', x);
+                p.style.setProperty('--y', y);
+                
+                effectsOverlay.appendChild(p);
+            }
+
+            setTimeout(() => {
+                effectsOverlay.innerHTML = "";
+                effectsOverlay.style.display = "none";
+            }, 3000);
+        }
+
+        // --- FLYING NUMBER ANIMATION ---
+        function animateFlyingNumber(index, onComplete) {
+            const targetBtn = document.getElementById(`tile-${index}`);
+            const rect = targetBtn.getBoundingClientRect();
+            const numberToShow = index + 1;
+
+            // Create flying element
+            const flyer = document.createElement('div');
+            flyer.className = 'flying-number';
+            flyer.innerText = numberToShow;
+            document.body.appendChild(flyer);
+
+            // 1. Show Big for a moment
+            setTimeout(() => {
+                // 2. Fly to destination
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                const targetX = rect.left + rect.width / 2;
+                const targetY = rect.top + rect.height / 2;
+                const moveX = targetX - centerX;
+                const moveY = targetY - centerY;
+
+                flyer.style.transition = 'all 0.8s ease-in-out';
+                flyer.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px)) scale(0.2)`;
+                flyer.style.opacity = '0.7';
+
+                // 3. Cleanup after flight
+                setTimeout(() => {
+                    flyer.remove();
+                    onComplete();
+                }, 800);
+
+            }, 800); 
+        }
+
+        function triggerRevealLogic(index) {
+            // Special Effects Logic
+            if (index === 18 || index === 19) {
+                // DISCO EFFECT
+                runDiscoEffect(() => {
+                    animateFlyingNumber(index, () => {
+                        finalizeReveal(index);
+                    });
+                });
+                return;
+            } 
+            else if (index === 16 || index === 17) {
+                runFireworks();
+                setTimeout(() => {
+                     animateFlyingNumber(index, () => finalizeReveal(index));
+                }, 1500);
+                return;
+            } 
+            else if (index === 14 || index === 15) {
+                showTextEffect("Perfect!");
+                setTimeout(() => {
+                     animateFlyingNumber(index, () => finalizeReveal(index));
+                }, 1500);
+                return;
+            }
+            else if (index === 12 || index === 13) {
+                showTextEffect("👍");
+                setTimeout(() => {
+                     animateFlyingNumber(index, () => finalizeReveal(index));
+                }, 1500);
+                return;
+            }
+            else if (index === 10 || index === 11) {
+                showTextEffect("👏");
+                setTimeout(() => {
+                     animateFlyingNumber(index, () => finalizeReveal(index));
+                }, 1500);
+                return;
+            }
+
+            // Normal tiles - just fly
+            animateFlyingNumber(index, () => finalizeReveal(index));
+        }
+
+        function finalizeReveal(index) {
+            let pointValue = index + 1;
+            let btn = document.getElementById(`tile-${index}`);
+            let answerText = allData[currentGameIndex].list[index];
+
+            btn.innerText = `${index + 1}. ${answerText}`;
+            btn.classList.add("game-active");
+            gameStates[currentGameIndex][index] = true;
+
+            updateScore(pointValue);
+            setTimeout(switchTurn, 1000); 
+        }
+
+        // ----------------------------------------------------
+        // 5. MENU
         // ----------------------------------------------------
         function renderMenu() {
             menuArea.innerHTML = "";
@@ -607,6 +907,7 @@
             gameArea.style.display = "none";
             backButton.style.display = "none";
             gameHeader.style.display = "none";
+            effectsOverlay.style.display = "none";
             historyStack = [];
 
             allData.forEach((item, index) => {
@@ -643,7 +944,7 @@
         }
 
         // ----------------------------------------------------
-        // 5. START GAME
+        // 6. START GAME
         // ----------------------------------------------------
         function startGame() {
             menuArea.style.display = "none";
@@ -672,12 +973,9 @@
                 btn.id = `tile-${i}`;
                 
                 let placeText = `Հորիզոնական ${i+1}`;
-                
-                // === Hints Logic ===
                 if (currentData.hints && currentData.hints[i]) {
                     placeText = `${i + 1}. ${currentData.hints[i]}`;
                 }
-
                 let answerText = currentData.list[i];
 
                 if (gameStates[currentGameIndex][i] === true) {
@@ -694,13 +992,20 @@
                         if(confirm(`Փակե՞լ վանդակը և հանել ${pointValue} միավոր ակտիվ թիմից։`)) {
                             saveState();
                             updateScore(-pointValue);
-                            this.innerText = placeText;
+                            
+                            let resetText = `Հորիզոնական ${i+1}`;
+                            if (currentData.hints && currentData.hints[i]) {
+                                resetText = `${i + 1}. ${currentData.hints[i]}`;
+                            }
+                            this.innerText = resetText;
+                            
                             this.classList.remove("game-active");
                             gameStates[currentGameIndex][i] = false;
                         }
                     } else {
                         saveState();
-                        revealTile(i);
+                        // Instead of direct revealTile, trigger the effect logic
+                        triggerRevealLogic(i);
                     }
                 };
                 
@@ -709,7 +1014,7 @@
         }
 
         // ----------------------------------------------------
-        // 6. CHECKING LOGIC
+        // 7. CHECKING LOGIC
         // ----------------------------------------------------
         function handleEnter(event, teamId) {
             if(event.key === 'Enter') {
@@ -754,7 +1059,7 @@
             }
 
             if (foundIndex !== -1) {
-                revealTile(foundIndex);
+                triggerRevealLogic(foundIndex);
             } else {
                 showNotification();
                 setTimeout(switchTurn, 1500);
@@ -766,19 +1071,6 @@
             setTimeout(() => {
                 notification.style.display = "none";
             }, 1500);
-        }
-
-        function revealTile(index) {
-            let pointValue = index + 1; 
-            let btn = document.getElementById(`tile-${index}`);
-            let answerText = allData[currentGameIndex].list[index];
-
-            btn.innerText = `${index + 1}. ${answerText}`;
-            btn.classList.add("game-active");
-            gameStates[currentGameIndex][index] = true;
-
-            updateScore(pointValue);
-            setTimeout(switchTurn, 500);
         }
 
         function goBackToMenu() {
